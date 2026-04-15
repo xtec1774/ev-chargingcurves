@@ -2,18 +2,18 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
-# Seite konfigurieren (Breites Layout und Titel im Browser-Tab)
+# Seite konfigurieren
 st.set_page_config(page_title="EV Ladekurven Vergleich", layout="wide", page_icon="🚗")
 
 # Styling: Titel und Einleitung
 st.title("🚗 EV Ladekurven & Ladezeit Vergleich")
 st.write("Vergleiche die reale Ladeperformance verschiedener Elektroautos basierend auf Testdaten.")
 
-# 1. Daten laden (mit automatischer Semikolon-Erkennung)
+# 1. Daten laden
 @st.cache_data
 def load_data():
     try:
-        # Wir nutzen sep=";", da deine Excel/CSV-Datei Semikolons verwendet
+        # Laden der CSV mit Semikolon-Trenner
         df = pd.read_csv("ladekurven.csv", sep=";")
         return df
     except Exception as e:
@@ -23,14 +23,15 @@ def load_data():
 df = load_data()
 
 if df is not None:
-    # 2. Fahrzeugauswahl in der Seitenleiste (Sidebar)
-    st.sidebar.header("Einstellungen")
+    # 2. Fahrzeugauswahl direkt auf der Hauptseite
     modelle = sorted(df['Modell'].unique())
-    auswahl = st.sidebar.multiselect(
-        "Fahrzeuge auswählen:", 
+    auswahl = st.multiselect(
+        "Fahrzeuge auswählen und vergleichen:", 
         modelle, 
         default=modelle[:2] if len(modelle) > 1 else modelle
     )
+
+    st.markdown("---") # Trennlinie für bessere Optik
 
     if auswahl:
         gefilterte_daten = df[df['Modell'].isin(auswahl)]
@@ -39,7 +40,7 @@ if df is not None:
         col1, col2 = st.columns(2)
 
         with col1:
-            st.subheader("Ladeleistung")
+            st.subheader("Ladeleistung (kW)")
             fig_power = px.line(
                 gefilterte_daten, 
                 x="SoC", 
@@ -55,7 +56,7 @@ if df is not None:
             st.plotly_chart(fig_power, use_container_width=True)
 
         with col2:
-            st.subheader("Ladezeit")
+            st.subheader("Ladezeit (Minuten)")
             fig_time = px.line(
                 gefilterte_daten, 
                 x="Zeit_Minuten", 
@@ -70,9 +71,10 @@ if df is not None:
             fig_time.update_layout(hovermode="x unified")
             st.plotly_chart(fig_time, use_container_width=True)
             
-        st.info("💡 **Tipp:** Du kannst in der Legende auf ein Modell klicken, um es auszublenden, oder mit der Maus über die Linien fahren für Details.")
+        st.info("💡 **Tipp:** Klicke auf die Namen in der Legende, um einzelne Fahrzeuge auszublenden. Bewege die Maus über die Kurven für exakte Werte.")
     else:
-        st.warning("👈 Bitte wähle mindestens ein Fahrzeug in der Seitenleiste aus.")
+        st.warning("☝️ Bitte wähle oben mindestens ein Fahrzeug aus, um den Vergleich zu starten.")
 
-st.sidebar.markdown("---")
-st.sidebar.info("📢 **Daten beisteuern?**\nBesuche das [GitHub Repository](https://github.com/xtec1774/ev-chargingcurves), um neue Ladekurven einzureichen!")
+# "Mitmachen"-Bereich
+st.markdown("---")
+st.info("📢 **Daten beisteuern?** Besuche das [GitHub Repository](https://github.com/xtec1774/ev-chargingcurves), um neue Ladekurven einzureichen!")
