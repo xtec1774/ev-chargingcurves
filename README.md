@@ -31,3 +31,23 @@ Falls du die App lokal testen möchtest:
 ## 📈 Datenquellen
 Die Ladekurven basieren zu Beginn auf öffentlich zugänglichen Testdaten (z.B. P3 Charging Index, Fastned, Herstellerangaben). 
 *Hinweis: Die Werte dienen dem Vergleich und können je nach Außentemperatur und Säulentyp variieren.*
+
+## ✍️ Mitmachen: Neue Fahrzeugdaten hinzufügen
+
+Du hast Ladedaten für ein neues Elektroauto oder eine andere Batterievariante? Du kannst helfen, die Datenbank zu erweitern!
+
+### So kannst du Daten beisteuern:
+1. **Per Pull Request (für GitHub-Nutzer):**
+   - Öffne die Datei `ladekurven.csv`.
+   - Füge deine Daten am Ende hinzu (bitte das Semikolon `;` als Trenner nutzen).
+   - Erstelle einen Pull Request.
+2. **Per Issue:**
+   - Erstelle ein neues [Issue](https://github.com/xtec1774/ev-chargingcurves/issues) und poste dort die Werte für Modell, SoC, Leistung und Zeit. Ich pflege sie dann ein.
+
+### Das benötigte Format:
+Damit die Kurven korrekt angezeigt werden, benötigen wir idealerweise Werte in 5% oder 10% Schritten.
+Beispiel:
+`Modell;SoC;Leistung;Zeit_Minuten`
+`Mein Auto;10;150;0`
+`Mein Auto;20;140;4`
+...
