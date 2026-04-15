@@ -12,7 +12,7 @@ st.write("Wähle verschiedene Fahrzeuge aus, um ihre Leistung und Ladezeit zu ve
 @st.cache_data
 def load_data():
     # Wir laden die Datei, die du gerade erstellt hast
-df = pd.read_csv("ladekurven.csv", sep=";")
+    df = pd.read_csv("ladekurven.csv", sep=";")
     return df
 
 try:
