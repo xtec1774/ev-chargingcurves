@@ -37,7 +37,7 @@ if df is not None:
         gefilterte_daten = df[df['Modell'].isin(auswahl)]
 
         # --- ABSCHNITT: Schnellanalyse & Reichweite ---
-        st.subheader("⚡ Reichweiten-Check & Goldstandard")
+        st.subheader("⚡ 15 Min. Reichweite & Goldstandard")
         
         metric_cols = st.columns(len(auswahl))
         
