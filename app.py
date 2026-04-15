@@ -73,3 +73,6 @@ if df is not None:
         st.info("💡 **Tipp:** Du kannst in der Legende auf ein Modell klicken, um es auszublenden, oder mit der Maus über die Linien fahren für Details.")
     else:
         st.warning("👈 Bitte wähle mindestens ein Fahrzeug in der Seitenleiste aus.")
+
+st.sidebar.markdown("---")
+st.sidebar.info("📢 **Daten beisteuern?**\nBesuche das [GitHub Repository](https://github.com/xtec1774/ev-chargingcurves), um neue Ladekurven einzureichen!")
