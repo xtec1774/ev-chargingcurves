@@ -69,11 +69,9 @@ if df is not None:
                         label=fahrzeug, 
                         value=f"+ {int(round(nachgeladene_km))} km", 
                         delta=f"Ø {int(round(avg_pwr))} kW (10-80%)",
-                        delta_color="normal",
-                        help=f"Reichweitengewinn in 15 Min bei {verbrauch} kWh/100km."
+                        delta_color="normal"
                     )
                     
-                    # Zeit und Akku fett und gut sichtbar ohne "Caption"
                     row_80 = auto_data[auto_data['SoC'] == 80]
                     if not row_80.empty:
                         dauer_80 = row_80['Zeit_Minuten'].values[0] - zeit_10
@@ -87,21 +85,37 @@ if df is not None:
         # --- DIAGRAMME ---
         col1, col2 = st.columns(2)
 
+        # Gemeinsames Layout-Design für beide Charts
+        chart_layout = dict(
+            hovermode="x unified",
+            legend=dict(orientation="v", yanchor="top", y=1, xanchor="left", x=1.02),
+            margin=dict(l=0, r=0, t=30, b=0),
+            template="plotly_white"
+        )
+
         with col1:
             st.subheader("Ladeleistung (kW)")
-            fig_power = px.line(gefilterte_daten, x="SoC", y="Leistung", color="Modell", markers=True, line_shape='spline', template="plotly_white")
-            fig_power.update_layout(hovermode="x unified", legend=dict(orientation="h", yanchor="bottom", y=1.02, x=1))
+            fig_power = px.line(
+                gefilterte_daten, x="SoC", y="Leistung", color="Modell", 
+                markers=True, line_shape='spline',
+                labels={"SoC": "Ladestand (%)", "Leistung": "Leistung (kW)"}
+            )
+            fig_power.update_layout(chart_layout)
             st.plotly_chart(fig_power, use_container_width=True)
 
         with col2:
             st.subheader("Ladezeit (Minuten)")
-            fig_time = px.line(gefilterte_daten, x="Zeit_Minuten", y="SoC", color="Modell", markers=True, line_shape='spline', template="plotly_white")
-            fig_time.update_layout(hovermode="x unified", legend=dict(orientation="h", yanchor="bottom", y=1.02, x=1))
+            fig_time = px.line(
+                gefilterte_daten, x="Zeit_Minuten", y="SoC", color="Modell", 
+                markers=True, line_shape='spline',
+                labels={"Zeit_Minuten": "Zeit (Minuten)", "SoC": "Ladestand (%)"}
+            )
+            fig_time.update_layout(chart_layout)
             st.plotly_chart(fig_time, use_container_width=True)
             
         st.info("💡 **Tipp:** Klicke auf die Namen in der Legende, um einzelne Fahrzeuge aus- oder einzublenden.")
     else:
         st.warning("☝️ Bitte Fahrzeuge auswählen.")
 
-# "Mitmachen"-Bereich ohne Trennlinie davor
+# "Mitmachen"-Bereich
 st.info("📢 **Daten beisteuern?** Besuche das [GitHub Repository](https://github.com/xtec1774/ev-chargingcurves)!")
