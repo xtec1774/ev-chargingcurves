@@ -7,7 +7,7 @@ st.set_page_config(page_title="EV Ladekurven Vergleich", layout="wide", page_ico
 
 # Styling: Titel und Einleitung
 st.title("🚗 EV Ladekurven & Ladezeit Vergleich")
-st.write("Vergleiche die reale Ladeperformance verschiedener Elektroautos basierend auf Testdaten.")
+st.write("Vergleiche die reale Ladeperformance verschiedener Elektroautos basierend auf Testdaten. ACHTUNG: Community-Basiert ohne Garantie!")
 
 # 1. Daten laden
 @st.cache_data
