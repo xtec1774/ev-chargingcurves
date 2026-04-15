@@ -44,7 +44,6 @@ if df is not None:
         for i, fahrzeug in enumerate(auswahl):
             auto_data = gefilterte_daten[gefilterte_daten['Modell'] == fahrzeug].sort_values("SoC")
             
-            # Initialisierung
             zeit_10 = None
             row_10 = auto_data[auto_data['SoC'] == 10]
             
@@ -52,7 +51,7 @@ if df is not None:
                 zeit_10 = row_10['Zeit_Minuten'].values[0]
 
             if zeit_10 is not None:
-                # Reichweite nach 15 Min (ab 10% Start)
+                # Reichweite nach 15 Min
                 zeit_ziel = zeit_10 + 15
                 soc_nach_15 = np.interp(zeit_ziel, auto_data['Zeit_Minuten'], auto_data['SoC'])
                 soc_diff = soc_nach_15 - 10
@@ -63,11 +62,9 @@ if df is not None:
                 geladene_kwh = (soc_diff / 100) * kapazitaet
                 nachgeladene_km = (geladene_kwh / verbrauch) * 100
                 
-                # Durchschnittsleistung 10-80% für das Delta
                 avg_pwr = auto_data[(auto_data['SoC'] >= 10) & (auto_data['SoC'] <= 80)]['Leistung'].mean()
                 
                 with metric_cols[i]:
-                    # Hauptmetrik: Reichweite + Durchschnittsleistung
                     st.metric(
                         label=fahrzeug, 
                         value=f"+ {int(round(nachgeladene_km))} km", 
@@ -76,12 +73,12 @@ if df is not None:
                         help=f"Reichweitengewinn in 15 Min bei {verbrauch} kWh/100km."
                     )
                     
-                    # 10-80% Zeit fett und präsent darstellen
+                    # Zeit und Akku fett und gut sichtbar ohne "Caption"
                     row_80 = auto_data[auto_data['SoC'] == 80]
                     if not row_80.empty:
                         dauer_80 = row_80['Zeit_Minuten'].values[0] - zeit_10
-                        st.markdown(f"⏱️ 10-80%: **{int(round(dauer_80))} Min.**")
-                        st.caption(f"🔋 Akku: {kapazitaet} kWh")
+                        st.write(f"⏱️ 10-80%: **{int(round(dauer_80))} Min.**")
+                        st.write(f"🔋 Akku: **{kapazitaet} kWh**")
             else:
                 metric_cols[i].warning(f"Daten für 10% SoC fehlen.")
 
@@ -106,6 +103,5 @@ if df is not None:
     else:
         st.warning("☝️ Bitte Fahrzeuge auswählen.")
 
-# "Mitmachen"-Bereich
-st.markdown("---")
+# "Mitmachen"-Bereich ohne Trennlinie davor
 st.info("📢 **Daten beisteuern?** Besuche das [GitHub Repository](https://github.com/xtec1774/ev-chargingcurves)!")
