@@ -1,9 +1,49 @@
 Modell;SoC;Leistung;Zeit_Minuten
-Tesla Model 3;10;250;0
-Tesla Model 3;20;230;5
-Tesla Model 3;50;110;15
-Tesla Model 3;80;50;30
-VW ID.4;10;135;0
-VW ID.4;20;135;7
-VW ID.4;50;80;20
-VW ID.4;80;45;38
+Tesla Model 3 Highland (LR);10;250;0
+Tesla Model 3 Highland (LR);20;205;3
+Tesla Model 3 Highland (LR);30;180;6
+Tesla Model 3 Highland (LR);40;155;9
+Tesla Model 3 Highland (LR);50;120;13
+Tesla Model 3 Highland (LR);60;95;17
+Tesla Model 3 Highland (LR);70;70;23
+Tesla Model 3 Highland (LR);80;50;31
+Hyundai IONIQ 5 (77kWh);10;235;0
+Hyundai IONIQ 5 (77kWh);20;235;3
+Hyundai IONIQ 5 (77kWh);30;230;5
+Hyundai IONIQ 5 (77kWh);40;225;8
+Hyundai IONIQ 5 (77kWh);50;210;11
+Hyundai IONIQ 5 (77kWh);60;185;13
+Hyundai IONIQ 5 (77kWh);70;155;16
+Hyundai IONIQ 5 (77kWh);80;120;18
+VW ID.7 (Pro S);10;200;0
+VW ID.7 (Pro S);20;185;3
+VW ID.7 (Pro S);30;170;7
+VW ID.7 (Pro S);40;150;11
+VW ID.7 (Pro S);50;125;15
+VW ID.7 (Pro S);60;105;20
+VW ID.7 (Pro S);70;85;26
+VW ID.7 (Pro S);80;60;33
+Kia EV9 (99kWh);10;210;0
+Kia EV9 (99kWh);20;210;4
+Kia EV9 (99kWh);30;208;8
+Kia EV9 (99kWh);40;205;12
+Kia EV9 (99kWh);50;195;16
+Kia EV9 (99kWh);60;180;20
+Kia EV9 (99kWh);70;150;25
+Kia EV9 (99kWh);80;115;30
+BMW i4 eDrive40;10;205;0
+BMW i4 eDrive40;20;190;3
+BMW i4 eDrive40;30;160;7
+BMW i4 eDrive40;40;135;11
+BMW i4 eDrive40;50;115;15
+BMW i4 eDrive40;60;95;20
+BMW i4 eDrive40;70;75;25
+BMW i4 eDrive40;80;60;31
+Porsche Taycan (2024 J1 II);10;320;0
+Porsche Taycan (2024 J1 II);20;320;2
+Porsche Taycan (2024 J1 II);30;310;4
+Porsche Taycan (2024 J1 II);40;290;6
+Porsche Taycan (2024 J1 II);50;270;8
+Porsche Taycan (2024 J1 II);60;240;11
+Porsche Taycan (2024 J1 II);70;200;14
+Porsche Taycan (2024 J1 II);80;160;18
