@@ -76,5 +76,4 @@ if df is not None:
         st.warning("☝️ Bitte wähle oben mindestens ein Fahrzeug aus, um den Vergleich zu starten.")
 
 # "Mitmachen"-Bereich
-st.markdown("---")
 st.info("📢 **Daten beisteuern?** Besuche das [GitHub Repository](https://github.com/xtec1774/ev-chargingcurves), um neue Ladekurven einzureichen!")
