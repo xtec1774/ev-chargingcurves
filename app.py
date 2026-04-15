@@ -37,25 +37,23 @@ if df is not None:
         gefilterte_daten = df[df['Modell'].isin(auswahl)]
 
         # --- ABSCHNITT: Schnellanalyse & Reichweite ---
-        st.subheader("⚡ 15 Min. Reichweite & Goldstandard")
+        st.subheader("⚡ 15 Min. Reichweite & Goldstandard (10-80%)")
         
         metric_cols = st.columns(len(auswahl))
         
         for i, fahrzeug in enumerate(auswahl):
             auto_data = gefilterte_daten[gefilterte_daten['Modell'] == fahrzeug].sort_values("SoC")
             
-            # Initialisierung der Variablen zur Sicherheit
+            # Initialisierung
             zeit_10 = None
-            
-            # Suche Startzeit bei 10%
             row_10 = auto_data[auto_data['SoC'] == 10]
+            
             if not row_10.empty:
                 zeit_10 = row_10['Zeit_Minuten'].values[0]
 
-            # Reichweite nach 15 Min (ab 10% Start) berechnen
             if zeit_10 is not None:
+                # Reichweite nach 15 Min (ab 10% Start)
                 zeit_ziel = zeit_10 + 15
-                # SoC nach 15 Minuten finden (Interpolation zwischen den Datenpunkten)
                 soc_nach_15 = np.interp(zeit_ziel, auto_data['Zeit_Minuten'], auto_data['SoC'])
                 soc_diff = soc_nach_15 - 10
                 
@@ -65,18 +63,24 @@ if df is not None:
                 geladene_kwh = (soc_diff / 100) * kapazitaet
                 nachgeladene_km = (geladene_kwh / verbrauch) * 100
                 
+                # Durchschnittsleistung 10-80% für das Delta
+                avg_pwr = auto_data[(auto_data['SoC'] >= 10) & (auto_data['SoC'] <= 80)]['Leistung'].mean()
+                
                 with metric_cols[i]:
+                    # Hauptmetrik: Reichweite + Durchschnittsleistung
                     st.metric(
                         label=fahrzeug, 
                         value=f"+ {int(round(nachgeladene_km))} km", 
-                        help=f"Reichweitengewinn in 15 Min (Start bei 10% SoC) bei {verbrauch} kWh/100km Autobahnverbrauch."
+                        delta=f"Ø {int(round(avg_pwr))} kW (10-80%)",
+                        delta_color="normal",
+                        help=f"Reichweitengewinn in 15 Min bei {verbrauch} kWh/100km."
                     )
                     
-                    # 10-80% Dauer berechnen
+                    # 10-80% Zeit fett und präsent darstellen
                     row_80 = auto_data[auto_data['SoC'] == 80]
                     if not row_80.empty:
                         dauer_80 = row_80['Zeit_Minuten'].values[0] - zeit_10
-                        st.caption(f"⏱️ 10-80%: **{int(round(dauer_80))} Min**")
+                        st.markdown(f"⏱️ 10-80%: **{int(round(dauer_80))} Min.**")
                         st.caption(f"🔋 Akku: {kapazitaet} kWh")
             else:
                 metric_cols[i].warning(f"Daten für 10% SoC fehlen.")
@@ -97,8 +101,11 @@ if df is not None:
             fig_time = px.line(gefilterte_daten, x="Zeit_Minuten", y="SoC", color="Modell", markers=True, line_shape='spline', template="plotly_white")
             fig_time.update_layout(hovermode="x unified", legend=dict(orientation="h", yanchor="bottom", y=1.02, x=1))
             st.plotly_chart(fig_time, use_container_width=True)
+            
+        st.info("💡 **Tipp:** Klicke auf die Namen in der Legende, um einzelne Fahrzeuge aus- oder einzublenden.")
     else:
         st.warning("☝️ Bitte Fahrzeuge auswählen.")
 
 # "Mitmachen"-Bereich
+st.markdown("---")
 st.info("📢 **Daten beisteuern?** Besuche das [GitHub Repository](https://github.com/xtec1774/ev-chargingcurves)!")
