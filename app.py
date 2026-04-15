@@ -2,57 +2,74 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
-# Seite konfigurieren
-st.set_page_config(page_title="EV Ladekurven Vergleich", layout="wide")
+# Seite konfigurieren (Breites Layout und Titel im Browser-Tab)
+st.set_page_config(page_title="EV Ladekurven Vergleich", layout="wide", page_icon="🚗")
 
+# Styling: Titel und Einleitung
 st.title("🚗 EV Ladekurven & Ladezeit Vergleich")
-st.write("Wähle verschiedene Fahrzeuge aus, um ihre Leistung und Ladezeit zu vergleichen.")
+st.write("Vergleiche die reale Ladeperformance verschiedener Elektroautos basierend auf Testdaten.")
 
-# 1. Daten laden
+# 1. Daten laden (mit automatischer Semikolon-Erkennung)
 @st.cache_data
 def load_data():
-    # Wir laden die Datei, die du gerade erstellt hast
-    df = pd.read_csv("ladekurven.csv", sep=";")
-    return df
+    try:
+        # Wir nutzen sep=";", da deine Excel/CSV-Datei Semikolons verwendet
+        df = pd.read_csv("ladekurven.csv", sep=";")
+        return df
+    except Exception as e:
+        st.error(f"Fehler beim Laden der ladekurven.csv: {e}")
+        return None
 
-try:
-    df = load_data()
+df = load_data()
 
-    # 2. Fahrzeugauswahl
-    modelle = df['Modell'].unique()
-    auswahl = st.multiselect("Fahrzeuge hinzufügen:", modelle, default=modelle[0] if len(modelle) > 0 else None)
+if df is not None:
+    # 2. Fahrzeugauswahl in der Seitenleiste (Sidebar)
+    st.sidebar.header("Einstellungen")
+    modelle = sorted(df['Modell'].unique())
+    auswahl = st.sidebar.multiselect(
+        "Fahrzeuge auswählen:", 
+        modelle, 
+        default=modelle[:2] if len(modelle) > 1 else modelle
+    )
 
     if auswahl:
         gefilterte_daten = df[df['Modell'].isin(auswahl)]
 
-        # Spalten für die zwei Charts
+        # Layout: Zwei Spalten für die Charts
         col1, col2 = st.columns(2)
 
         with col1:
-            st.subheader("Ladeleistung (kW)")
+            st.subheader("Ladeleistung")
             fig_power = px.line(
                 gefilterte_daten, 
                 x="SoC", 
                 y="Leistung", 
                 color="Modell",
                 markers=True,
-                labels={"SoC": "Ladestand (%)", "Leistung": "Leistung (kW)"}
+                line_shape='spline',
+                render_mode='svg',
+                labels={"SoC": "Ladestand (%)", "Leistung": "Leistung (kW)"},
+                template="plotly_white"
             )
+            fig_power.update_layout(hovermode="x unified")
             st.plotly_chart(fig_power, use_container_width=True)
 
         with col2:
-            st.subheader("Ladezeit (Minuten)")
+            st.subheader("Ladezeit")
             fig_time = px.line(
                 gefilterte_daten, 
                 x="Zeit_Minuten", 
                 y="SoC", 
                 color="Modell",
                 markers=True,
-                labels={"Zeit_Minuten": "Zeit (Minuten)", "SoC": "Ladestand (%)"}
+                line_shape='spline',
+                render_mode='svg',
+                labels={"Zeit_Minuten": "Zeit (Minuten)", "SoC": "Ladestand (%)"},
+                template="plotly_white"
             )
+            fig_time.update_layout(hovermode="x unified")
             st.plotly_chart(fig_time, use_container_width=True)
+            
+        st.info("💡 **Tipp:** Du kannst in der Legende auf ein Modell klicken, um es auszublenden, oder mit der Maus über die Linien fahren für Details.")
     else:
-        st.info("Bitte wähle mindestens ein Fahrzeug aus der Liste aus.")
-
-except FileNotFoundError:
-    st.error("Datei 'ladekurven.csv' nicht gefunden. Bitte stelle sicher, dass sie im gleichen Ordner liegt.")
+        st.warning("👈 Bitte wähle mindestens ein Fahrzeug in der Seitenleiste aus.")
