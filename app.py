@@ -44,33 +44,42 @@ if df is not None:
         for i, fahrzeug in enumerate(auswahl):
             auto_data = gefilterte_daten[gefilterte_daten['Modell'] == fahrzeug].sort_values("SoC")
             
-            # 10-80% Check
+            # Initialisierung der Variablen zur Sicherheit
+            zeit_10 = None
+            
+            # Suche Startzeit bei 10%
             row_10 = auto_data[auto_data['SoC'] == 10]
-            row_80 = auto_data[auto_data['SoC'] == 80]
-            
-            # Reichweite nach 15 Min (ab 10% Start)
-            # Wir interpolieren, falls 15 Min zwischen zwei SoC Punkten liegt
-            soc_start = 10
-            zeit_start = auto_data[auto_data['SoC'] == soc_start]['Zeit_Minuten'].values[0] if not row_10.empty else 0
-            zeit_ziel = zeit_start + 15
-            
-            # SoC nach 15 Minuten finden (Interpolation)
-            soc_nach_15 = np.interp(zeit_ziel, auto_data['Zeit_Minuten'], auto_data['SoC'])
-            soc_diff = soc_nach_15 - soc_start
-            
-            kapazitaet = auto_data['Kapazitaet_kWh'].iloc[0]
-            verbrauch = auto_data['Verbrauch_kWh_100km'].iloc[0]
-            
-            geladene_kwh = (soc_diff / 100) * kapazitaet
-            nachgeladene_km = (geladene_kwh / verbrauch) * 100
-            
-            with metric_cols[i]:
-                st.metric(label=fahrzeug, value=f"+ {int(round(nachgeladene_km))} km", help=f"Reichweitengewinn in 15 Min (Start bei 10% SoC) bei {verbrauch} kWh/100km Autobahnverbrauch.")
+            if not row_10.empty:
+                zeit_10 = row_10['Zeit_Minuten'].values[0]
+
+            # Reichweite nach 15 Min (ab 10% Start) berechnen
+            if zeit_10 is not None:
+                zeit_ziel = zeit_10 + 15
+                # SoC nach 15 Minuten finden (Interpolation zwischen den Datenpunkten)
+                soc_nach_15 = np.interp(zeit_ziel, auto_data['Zeit_Minuten'], auto_data['SoC'])
+                soc_diff = soc_nach_15 - 10
                 
-                if not row_10.empty and not row_80.empty:
-                    dauer_80 = row_80['Zeit_Minuten'].values[0] - zeit_10
-                    st.caption(f"⏱️ 10-80%: **{int(dauer_80)} Min**")
-                    st.caption(f"🔋 Akku: {kapazitaet} kWh")
+                kapazitaet = auto_data['Kapazitaet_kWh'].iloc[0]
+                verbrauch = auto_data['Verbrauch_kWh_100km'].iloc[0]
+                
+                geladene_kwh = (soc_diff / 100) * kapazitaet
+                nachgeladene_km = (geladene_kwh / verbrauch) * 100
+                
+                with metric_cols[i]:
+                    st.metric(
+                        label=fahrzeug, 
+                        value=f"+ {int(round(nachgeladene_km))} km", 
+                        help=f"Reichweitengewinn in 15 Min (Start bei 10% SoC) bei {verbrauch} kWh/100km Autobahnverbrauch."
+                    )
+                    
+                    # 10-80% Dauer berechnen
+                    row_80 = auto_data[auto_data['SoC'] == 80]
+                    if not row_80.empty:
+                        dauer_80 = row_80['Zeit_Minuten'].values[0] - zeit_10
+                        st.caption(f"⏱️ 10-80%: **{int(round(dauer_80))} Min**")
+                        st.caption(f"🔋 Akku: {kapazitaet} kWh")
+            else:
+                metric_cols[i].warning(f"Daten für 10% SoC fehlen.")
 
         st.markdown("---")
 
@@ -91,4 +100,5 @@ if df is not None:
     else:
         st.warning("☝️ Bitte Fahrzeuge auswählen.")
 
+# "Mitmachen"-Bereich
 st.info("📢 **Daten beisteuern?** Besuche das [GitHub Repository](https://github.com/xtec1774/ev-chargingcurves)!")
