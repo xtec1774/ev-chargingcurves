@@ -15,6 +15,11 @@ st.write("Vergleiche Ladeperformance und reale Reichweitengewinne basierend auf 
 def load_data():
     try:
         df = pd.read_csv("ladekurven.csv", sep=";")
+        # Sicherstellen, dass numerische Spalten auch Zahlen sind
+        numeric_cols = ['SoC', 'Leistung', 'Zeit_Minuten', 'Kapazitaet_kWh', 'Verbrauch_kWh_100km']
+        for col in numeric_cols:
+            if col in df.columns:
+                df[col] = pd.to_numeric(df[col], errors='coerce')
         return df
     except Exception as e:
         st.error(f"Fehler beim Laden der ladekurven.csv: {e}")
@@ -42,51 +47,63 @@ if df is not None:
         metric_cols = st.columns(len(auswahl))
         
         for i, fahrzeug in enumerate(auswahl):
-            auto_data = gefilterte_daten[gefilterte_daten['Modell'] == fahrzeug].sort_values("SoC")
+            auto_data = gefilterte_daten[gefilterte_daten['Modell'] == fahrzeug].sort_values("SoC").dropna(subset=['SoC', 'Zeit_Minuten'])
             
-            # Überprüfung ob alle notwendigen Spalten für dieses Modell befüllt sind (verhindert den ValueError)
-            has_data = all(col in auto_data.columns for col in ['Kapazitaet_kWh', 'Verbrauch_kWh_100km'])
-            
+            # Fehlerprävention: Initialisierung der Variablen (löst NameError aus Bild 3)
             zeit_10 = None
+            nachgeladene_km = None
+            avg_pwr = None
+            dauer_80 = None
+            
+            # Suche Startzeit bei 10%
             row_10 = auto_data[auto_data['SoC'] == 10]
             if not row_10.empty:
                 zeit_10 = row_10['Zeit_Minuten'].values[0]
 
-            if zeit_10 is not None and has_data:
+            # Überprüfung der Datenvollständigkeit
+            has_specs = all(col in auto_data.columns for col in ['Kapazitaet_kWh', 'Verbrauch_kWh_100km'])
+            
+            if zeit_10 is not None and has_specs:
                 try:
-                    # Reichweite nach 15 Min
-                    zeit_ziel = zeit_10 + 15
-                    soc_nach_15 = np.interp(zeit_ziel, auto_data['Zeit_Minuten'], auto_data['SoC'])
-                    soc_diff = soc_nach_15 - 10
-                    
                     kap = auto_data['Kapazitaet_kWh'].iloc[0]
                     verb = auto_data['Verbrauch_kWh_100km'].iloc[0]
                     
-                    # Nur rechnen, wenn Werte gültige Zahlen sind
                     if pd.notnull(kap) and pd.notnull(verb) and verb > 0:
+                        # Reichweite nach 15 Min berechnen
+                        zeit_ziel = zeit_10 + 15
+                        soc_nach_15 = np.interp(zeit_ziel, auto_data['Zeit_Minuten'], auto_data['SoC'])
+                        soc_diff = soc_nach_15 - 10
+                        
                         geladene_kwh = (soc_diff / 100) * kap
                         nachgeladene_km = (geladene_kwh / verb) * 100
-                        avg_pwr = auto_data[(auto_data['SoC'] >= 10) & (auto_data['SoC'] <= 80)]['Leistung'].mean()
                         
-                        with metric_cols[i]:
-                            st.metric(
-                                label=fahrzeug, 
-                                value=f"+ {int(round(nachgeladene_km))} km", 
-                                delta=f"Ø {int(round(avg_pwr))} kW (10-80%)",
-                                delta_color="normal"
-                            )
-                            
-                            row_80 = auto_data[auto_data['SoC'] == 80]
-                            if not row_80.empty:
-                                dauer_80 = row_80['Zeit_Minuten'].values[0] - zeit_10
-                                st.write(f"⏱️ 10-80%: **{int(round(dauer_80))} Min.**")
-                                st.write(f"🔋 Akku: **{kap} kWh**")
-                    else:
-                        metric_cols[i].info(f"Daten unvollständig für {fahrzeug}")
-                except:
-                    metric_cols[i].error("Berechnungsfehler")
-            else:
-                metric_cols[i].warning(f"10% SoC Daten fehlen.")
+                        # Durchschnittsleistung 10-80%
+                        mask_10_80 = (auto_data['SoC'] >= 10) & (auto_data['SoC'] <= 80)
+                        if mask_10_80.any():
+                            avg_pwr = auto_data[mask_10_80]['Leistung'].mean()
+                        
+                        # Dauer 10-80%
+                        row_80 = auto_data[auto_data['SoC'] == 80]
+                        if not row_80.empty:
+                            dauer_80 = row_80['Zeit_Minuten'].values[0] - zeit_10
+                except Exception:
+                    pass
+
+            # Visualisierung in den Spalten
+            with metric_cols[i]:
+                if nachgeladene_km is not None:
+                    st.metric(
+                        label=fahrzeug, 
+                        value=f"+ {int(round(nachgeladene_km))} km", 
+                        delta=f"Ø {int(round(avg_pwr))} kW (10-80%)" if avg_pwr else None,
+                        delta_color="normal"
+                    )
+                    if dauer_80 is not None:
+                        st.write(f"⏱️ 10-80%: **{int(round(dauer_80))} Min.**")
+                    st.write(f"🔋 Akku: **{kap} kWh**")
+                else:
+                    # Blaues Infofeld wie in Bild 4 gewünscht bei fehlenden Daten
+                    st.info(f"Daten unvollständig für {fahrzeug}")
 
         st.markdown("---")
 
