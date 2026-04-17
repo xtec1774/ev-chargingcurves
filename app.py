@@ -124,7 +124,7 @@ if df is not None:
             st.plotly_chart(fig_p, use_container_width=True)
 
         with col2:
-            st.subheader("Ladezeit ab 10% (Minuten)")
+            st.subheader("Ladezeit 10-80 % (Minuten)")
             fig_t = px.line(gefilterte_daten, x="Zeit_Minuten", y="SoC", color="Modell", markers=True, line_shape='spline')
             fig_t.update_layout(chart_layout)
             st.plotly_chart(fig_t, use_container_width=True)
