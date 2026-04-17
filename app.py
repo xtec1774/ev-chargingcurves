@@ -44,76 +44,75 @@ if df is not None:
         for i, fahrzeug in enumerate(auswahl):
             auto_data = gefilterte_daten[gefilterte_daten['Modell'] == fahrzeug].sort_values("SoC")
             
+            # Überprüfung ob alle notwendigen Spalten für dieses Modell befüllt sind (verhindert den ValueError)
+            has_data = all(col in auto_data.columns for col in ['Kapazitaet_kWh', 'Verbrauch_kWh_100km'])
+            
             zeit_10 = None
             row_10 = auto_data[auto_data['SoC'] == 10]
-            
             if not row_10.empty:
                 zeit_10 = row_10['Zeit_Minuten'].values[0]
 
-            if zeit_10 is not None:
-                # Reichweite nach 15 Min
-                zeit_ziel = zeit_10 + 15
-                soc_nach_15 = np.interp(zeit_ziel, auto_data['Zeit_Minuten'], auto_data['SoC'])
-                soc_diff = soc_nach_15 - 10
-                
-                kapazitaet = auto_data['Kapazitaet_kWh'].iloc[0]
-                verbrauch = auto_data['Verbrauch_kWh_100km'].iloc[0]
-                
-                geladene_kwh = (soc_diff / 100) * kapazitaet
-                nachgeladene_km = (geladene_kwh / verbrauch) * 100
-                
-                avg_pwr = auto_data[(auto_data['SoC'] >= 10) & (auto_data['SoC'] <= 80)]['Leistung'].mean()
-                
-                with metric_cols[i]:
-                    st.metric(
-                        label=fahrzeug, 
-                        value=f"+ {int(round(nachgeladene_km))} km", 
-                        delta=f"Ø {int(round(avg_pwr))} kW (10-80%)",
-                        delta_color="normal"
-                    )
+            if zeit_10 is not None and has_data:
+                try:
+                    # Reichweite nach 15 Min
+                    zeit_ziel = zeit_10 + 15
+                    soc_nach_15 = np.interp(zeit_ziel, auto_data['Zeit_Minuten'], auto_data['SoC'])
+                    soc_diff = soc_nach_15 - 10
                     
-                    row_80 = auto_data[auto_data['SoC'] == 80]
-                    if not row_80.empty:
-                        dauer_80 = row_80['Zeit_Minuten'].values[0] - zeit_10
-                        st.write(f"⏱️ 10-80%: **{int(round(dauer_80))} Min.**")
-                        st.write(f"🔋 Akku: **{kapazitaet} kWh**")
+                    kap = auto_data['Kapazitaet_kWh'].iloc[0]
+                    verb = auto_data['Verbrauch_kWh_100km'].iloc[0]
+                    
+                    # Nur rechnen, wenn Werte gültige Zahlen sind
+                    if pd.notnull(kap) and pd.notnull(verb) and verb > 0:
+                        geladene_kwh = (soc_diff / 100) * kap
+                        nachgeladene_km = (geladene_kwh / verb) * 100
+                        avg_pwr = auto_data[(auto_data['SoC'] >= 10) & (auto_data['SoC'] <= 80)]['Leistung'].mean()
+                        
+                        with metric_cols[i]:
+                            st.metric(
+                                label=fahrzeug, 
+                                value=f"+ {int(round(nachgeladene_km))} km", 
+                                delta=f"Ø {int(round(avg_pwr))} kW (10-80%)",
+                                delta_color="normal"
+                            )
+                            
+                            row_80 = auto_data[auto_data['SoC'] == 80]
+                            if not row_80.empty:
+                                dauer_80 = row_80['Zeit_Minuten'].values[0] - zeit_10
+                                st.write(f"⏱️ 10-80%: **{int(round(dauer_80))} Min.**")
+                                st.write(f"🔋 Akku: **{kap} kWh**")
+                    else:
+                        metric_cols[i].info(f"Daten unvollständig für {fahrzeug}")
+                except:
+                    metric_cols[i].error("Berechnungsfehler")
             else:
-                metric_cols[i].warning(f"Daten für 10% SoC fehlen.")
+                metric_cols[i].warning(f"10% SoC Daten fehlen.")
 
         st.markdown("---")
 
         # --- DIAGRAMME ---
         col1, col2 = st.columns(2)
 
-        # Gemeinsames Layout-Design für beide Charts
         chart_layout = dict(
             hovermode="x unified",
-            legend=dict(orientation="v", yanchor="top", y=1, xanchor="left", x=1.02),
-            margin=dict(l=0, r=0, t=30, b=0),
+            legend=dict(orientation="h", yanchor="bottom", y=-0.5, xanchor="center", x=0.5),
+            margin=dict(l=0, r=0, t=30, b=80),
             template="plotly_white"
         )
 
         with col1:
             st.subheader("Ladeleistung (kW)")
-            fig_power = px.line(
-                gefilterte_daten, x="SoC", y="Leistung", color="Modell", 
-                markers=True, line_shape='spline',
-                labels={"SoC": "Ladestand (%)", "Leistung": "Leistung (kW)"}
-            )
-            fig_power.update_layout(chart_layout)
-            st.plotly_chart(fig_power, use_container_width=True)
+            fig_p = px.line(gefilterte_daten, x="SoC", y="Leistung", color="Modell", markers=True, line_shape='spline')
+            fig_p.update_layout(chart_layout)
+            st.plotly_chart(fig_p, use_container_width=True)
 
         with col2:
             st.subheader("Ladezeit (Minuten)")
-            fig_time = px.line(
-                gefilterte_daten, x="Zeit_Minuten", y="SoC", color="Modell", 
-                markers=True, line_shape='spline',
-                labels={"Zeit_Minuten": "Zeit (Minuten)", "SoC": "Ladestand (%)"}
-            )
-            fig_time.update_layout(chart_layout)
-            st.plotly_chart(fig_time, use_container_width=True)
+            fig_t = px.line(gefilterte_daten, x="Zeit_Minuten", y="SoC", color="Modell", markers=True, line_shape='spline')
+            fig_t.update_layout(chart_layout)
+            st.plotly_chart(fig_t, use_container_width=True)
             
-        st.info("💡 **Tipp:** Klicke auf die Namen in der Legende, um einzelne Fahrzeuge aus- oder einzublenden.")
+        st.info("💡 **Tipp:** Klicke auf die Namen in der Legende, um einzelne Fahrzeuge auszublenden.")
     else:
         st.warning("☝️ Bitte Fahrzeuge auswählen.")
 
